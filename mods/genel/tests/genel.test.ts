@@ -289,12 +289,25 @@ describe('kancalar', () => {
     const dosyalar: Record<string, string> = { '/p/site/package.json': '{"prettier":{}}', '/p/site/node_modules/.bin/prettier': '', '/p/site/src/a.ts': 'x' }
     const calisan = dunya(on, {
       cwd: '/p/site', dosyalar, klasorler: {},
-      komutlar: [...repo('/p/site', 'ornek/site'), [/prettier --write/, () => { dosyalar['/p/site/src/a.ts'] = 'x;'; return '' }]],
+      komutlar: [...repo('/p/site', 'ornek/site'), [/prettier --check/, ''], [/prettier --write/, () => { dosyalar['/p/site/src/a.ts'] = 'x;'; return '' }]],
     })
     await $.session.start({ cwd: '/p/site', surface: null, isInteractive: false })
     const r = await $.tool.call({ tool: 'Edit', file_path: '/p/site/src/a.ts', old_string: 'a', new_string: 'b', replace_all: false })
     expect(calisan.some(c => c.includes('prettier --write --log-level warn /p/site/src/a.ts'))).toBe(true)
     expect(r.context?.join('\n')).toContain('[genel/format] a.ts')
+  })
+
+  test('önceden formatsız dosya formatlanmaz: PR’a ilgisiz fark girmesin', async ($, on) => {
+    mock.store(on)
+    const dosyalar: Record<string, string> = { '/p/site/package.json': '{"prettier":{}}', '/p/site/node_modules/.bin/prettier': '', '/p/site/src/eski.js': 'x' }
+    const calisan = dunya(on, {
+      cwd: '/p/site', dosyalar, klasorler: {},
+      komutlar: [...repo('/p/site', 'ornek/site'), [/prettier --check/, '', 1], [/prettier --write/, '']],
+    })
+    await $.session.start({ cwd: '/p/site', surface: null, isInteractive: false })
+    const r = await $.tool.call({ tool: 'Edit', file_path: '/p/site/src/eski.js', old_string: 'a', new_string: 'b', replace_all: false })
+    expect(calisan.some(c => c.includes('prettier --write'))).toBe(false)
+    expect(r.context?.join('\n') ?? '').not.toContain('[genel/format]')
   })
 
   test('formatlayıcısı olmayan projede dokunulmaz', async ($, on) => {
