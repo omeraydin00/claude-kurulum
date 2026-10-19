@@ -1,0 +1,7 @@
+{
+  "name": "genel",
+  "version": "0.1.0",
+  "description": "Her projede: tasarım turları, takip, CI, bağlam koruma, hata hafızası, nerede kaldık",
+  "author": { "name": "Ömer Faruk Aydın" },
+  "types": "./types/index.d.ts"
+}
