@@ -8,7 +8,7 @@ import { ciBaslat, ciSonrasi, kirmiziBant } from './ci'
 import { devirSikistir } from './devir'
 import { notEkle, notlariAl } from './durum'
 import { envBaslat, envDokunus } from './env'
-import { formatla } from './format'
+import { formatla, formatOncesi } from './format'
 import { hataHafizasi } from './hata'
 import { kaldikBaglami, kaldikBaslat, kaldikBant, kaldikKapat } from './kaldik'
 import { kartBaslat, kartCiz, kartKaydet, kartSay } from './kart'
@@ -110,6 +110,7 @@ export const register: Register = on => {
     if (yol && !e.agentId) {
       const n = await envDokunus($, yol).catch(() => null)
       if (n) notlar.push(n)
+      if (['Edit', 'MultiEdit', 'Write'].includes(e.tool)) await formatOncesi($, yol).catch(() => {})
     }
 
     const ran = await next(e)
