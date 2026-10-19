@@ -1,0 +1,47 @@
+{
+  "display": {
+    "showTools": false,
+    "showAgents": false,
+    "showTodos": false,
+    "showDuration": false,
+    "showCost": false,
+    "showDailyCost": false,
+    "showPromptCache": false,
+    "showCacheHitRate": false,
+    "showEffortLevel": false,
+    "effortFormat": "full",
+    "showSpeed": false,
+    "usagePace": false,
+    "showSessionName": false,
+    "modelFormat": "compact",
+    "contextValue": "percent",
+    "showLastResponseAt": false,
+    "showCompactions": false,
+    "usageCompact": true,
+    "showConfigCounts": false
+  },
+  "lineLayout": "compact",
+  "pathLevels": 1,
+  "gitStatus": {
+    "enabled": true,
+    "showDirty": true,
+    "showAheadBehind": false,
+    "showFileStats": false,
+    "pushWarningThreshold": 3,
+    "pushCriticalThreshold": 10
+  },
+  "colors": {
+    "context": "#7dd3fc",
+    "usage": "#a78bfa",
+    "warning": "#fbbf24",
+    "usageWarning": "#f472b6",
+    "critical": "#f87171",
+    "model": "#38bdf8",
+    "project": "#facc15",
+    "git": "#c084fc",
+    "gitBranch": "#34d399",
+    "label": "dim",
+    "barFilled": "▰",
+    "barEmpty": "▱"
+  }
+}

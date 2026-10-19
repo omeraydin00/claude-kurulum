@@ -1,0 +1,27 @@
+{
+  "env": {
+    "CLAUDE_CODE_PLUGIN_DIRS": "{REPO}/mods/genel"
+  },
+  "spinnerVerbs": {
+    "mode": "replace",
+    "verbs": [
+      "Düşünüyor",
+      "Kodluyor",
+      "İnceliyor",
+      "Hesaplıyor",
+      "Toparlıyor",
+      "Kurguluyor",
+      "Deniyor",
+      "Demleniyor",
+      "Pişiriyor",
+      "Karıştırıyor",
+      "Süzüyor",
+      "Ölçüp biçiyor"
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "{HUD_KOMUTU}",
+    "refreshInterval": 5
+  }
+}
