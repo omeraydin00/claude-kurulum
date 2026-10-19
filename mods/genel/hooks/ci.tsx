@@ -84,7 +84,8 @@ async function mainTur($: $T) {
   if (!(await acik($, 'ci'))) return update($, mainKirmizi, () => [])
   const kirmizi: string[] = []
   for (const r of (await kapsamRepolar($)).filter(x => x.slug)) {
-    const s = await calistir($, ['gh', 'run', 'list', '--repo', r.slug, '--branch', 'main', '--status', 'completed', '--limit', '1', '--json', 'conclusion'])
+    // Yalnız main'e push'la tetiklenen koşular: Dependabot ve zamanlanmış işler main'in sağlığını göstermez.
+    const s = await calistir($, ['gh', 'run', 'list', '--repo', r.slug, '--branch', 'main', '--event', 'push', '--status', 'completed', '--limit', '1', '--json', 'conclusion'])
     try {
       const son = (JSON.parse(s.out || '[]') as { conclusion: string }[])[0]
       if (son && ['failure', 'timed_out', 'startup_failure'].includes(son.conclusion)) kirmizi.push(r.ad)
