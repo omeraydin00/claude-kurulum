@@ -22,7 +22,7 @@ Her git reposunda, her dilde çalışır; parçaların çoğu yalnız gerektiği
 | Nerede kaldık | Projeyi açınca bu klasördeki son oturumun iki cümlelik özeti ve "devam et" düğmesi |
 | Proof of Done | Kod değişen turun sonunda projenin testleri (npm/pnpm/yarn/bun, pytest, go, cargo) arka planda koşar; kırılırsa hata Claude'a geri gönderilir (en çok 2 kez). Test komutu yoksa hiçbir şey yapmaz |
 | Otomatik format | Düzenlenen dosyaya projenin kendi formatlayıcısı (Prettier, Ruff/Black, gofmt, rustfmt). Yalnız düzenlemeden önce zaten formatlı olan ve yeni dosyalarda çalışır; formatsız eski dosyayı baştan biçimlendirip PR’a ilgisiz fark sokmaz. Ayarı yoksa dokunmaz |
-| Hata hafızası | Komut hata verince aynı hatayı eski oturum kayıtlarında arar, o zamanki açıklamayı Claude'a iletir |
+| Hata hafızası | Komut hata verince aynı hatayı eski oturum kayıtlarında arar, o zamanki açıklamayı Claude'a iletir. ripgrep (`rg`) varsa anında, yoksa arka planda arar |
 | Bildirimler | 1 dakikadan uzun iş bitince ve Claude izin/cevap beklerken macOS bildirimi. Telefona da: `/telefon` (ntfy; içerik gönderilmez, yalnız proje adı). Sesli: `/genel ac ses` |
 | Port çakışması | "port kullanımda" hatasında portu tutan programı gösterir, kapatma düğmesi verir |
 | `.env` denetimi | `.env.example`'da olup `.env`'de eksik değişkenleri söyler |
