@@ -56,6 +56,7 @@ declare module 'claude-code' {
       ayarlar: Ayarlar
       ci: CiIzleme[]
       mainKirmizi: string[]
+      kirmiziGorulen: string
       takip: TakipKaydi[]
       adim: FizikselAdim | null
       port: PortCakisma | null

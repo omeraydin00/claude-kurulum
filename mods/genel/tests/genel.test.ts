@@ -215,16 +215,63 @@ describe('kancalar', () => {
       JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Port 8081’i başka projenin Metro’su tutuyor; 8082’de başlatıyorum.' }] } }),
     ].join('\n')
     dunya(on, {
-      cwd: '/p', dosyalar: {}, klasorler: {}, hata: true, stdout: 'Error: listen EADDRINUSE: address already in use :::8081',
+      cwd: '/p', dosyalar: { '/opt/homebrew/bin/rg': '' }, klasorler: {}, hata: true, stdout: 'Error: listen EADDRINUSE: address already in use :::8081',
       komutlar: [
-        [/^find \/ev\/.claude\/projects/, '/ev/.claude/projects/-Users-ben-projeler-api/eski.jsonl'],
-        [/^grep -n -m1/, '12:{...}'],
+        [/^\/opt\/homebrew\/bin\/rg -l -F/, '/ev/.claude/projects/-Users-ben-projeler-api/eski.jsonl'],
+        [/^\/opt\/homebrew\/bin\/rg -n -m1/, '12:Error: listen'],
         [/^sed -n 12,72p/, eski],
       ],
     })
     await $.session.start({ cwd: '/p', surface: null, isInteractive: false })
     const r = await $.tool.call({ tool: 'Bash', command: 'npx expo start' })
     expect(r.context?.join('\n')).toContain('- projeler-api, 2026-10-03: "Port 8081’i başka projenin Metro’su tutuyor; 8082’de başlatıyorum."')
+  })
+
+  test('ripgrep yoksa arama komutu bekletmez; bulunan bir sonraki mesajla iletilir', async ($, on) => {
+    mock.store(on)
+    const eski = [
+      JSON.stringify({ type: 'user', timestamp: '2026-10-03T08:00:00Z', message: { content: 'Error: Cannot find module x' } }),
+      JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Paket kurulu değildi; npm install ile çözüldü, sonra tekrar denedim.' }] } }),
+    ].join('\n')
+    dunya(on, {
+      cwd: '/p', dosyalar: {}, klasorler: {}, hata: true, stdout: "Error: Cannot find module 'x'",
+      komutlar: [
+        [/^find \/ev\/.claude\/projects/, '/ev/.claude/projects/-Users-ben-projeler-api/eski.jsonl'],
+        [/^grep -n -m1 -o/, '12:Error: Cannot find module'],
+        [/^sed -n 12,72p/, eski],
+      ],
+    })
+    await $.session.start({ cwd: '/p', surface: null, isInteractive: false })
+    const r = await $.tool.call({ tool: 'Bash', command: 'node a.js' })
+    expect(r.context?.join('\n') ?? '').not.toContain('[genel/hata]')
+    let p = await $.prompt.submit({ text: 'devam' } as never)
+    for (let i = 0; i < 20 && !(p.context ?? []).join('').includes('[genel/hata]'); i++) {
+      await bekleKadar(() => false)
+      p = await $.prompt.submit({ text: 'devam' } as never)
+    }
+    expect(p.context?.join('\n')).toContain('npm install ile çözüldü')
+  })
+
+  test('main kırmızı bandı [tamam] ile kapanır, aynı liste sürdükçe geri gelmez', async ($, on) => {
+    mock.store(on)
+    dunya(on, { cwd: '/p/site', dosyalar: {}, klasorler: {}, komutlar: [...repo('/p/site', 'ornek/site'), [/^gh run list/, '[{"conclusion":"failure"}]'], [/^gh /, '[]']] })
+    on('ui.render', ($, e) => h($.ui.resolve(e).Text, {}, '') as never)
+    await $.session.start({ cwd: '/p/site', surface: null, isInteractive: false })
+    const props = { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 120, scroll: { offset: 0, bodyRows: 9 }, view: {} }
+    let bant = await $.ui.mount({ plugin: 'genel', surface: 'desktop', component: 'AbovePrompt', props })
+    await bant.drawn()
+    for (let i = 0; i < 20 && !(await bant.find({ text: /main kırmızı: site/ })); i++) {
+      await bant.unmount()
+      await bekleKadar(() => false)
+      bant = await $.ui.mount({ plugin: 'genel', surface: 'desktop', component: 'AbovePrompt', props })
+      await bant.drawn()
+    }
+    expect(await bant.find({ text: /main kırmızı: site/ })).toBeDefined()
+    await bant.press({ key: 'kirmizi-tamam' })
+    await bant.unmount()
+    const sonra = await $.ui.mount({ plugin: 'genel', surface: 'desktop', component: 'AbovePrompt', props })
+    await sonra.drawn()
+    expect(await sonra.find({ text: /main kırmızı/ })).toBeUndefined()
   })
 
   test('takip_ekle aracı listeye yazar, /takip tamam kapatır', async ($, on) => {
