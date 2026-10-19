@@ -1,4 +1,5 @@
 import { acik } from './ayar'
+import { notEkle } from './durum'
 import { adi, calistir } from './ortak'
 import type { $T } from './ortak'
 
@@ -43,23 +44,52 @@ export function sonrakiAciklama(satirlar: string[]): { zaman: string | null; met
 }
 
 const sorulan = new Set<string>()
+let rg: string | null | undefined
+
+// Oturum kayıtları GB'larca tutabilir: ripgrep yarım saniyede tarar, macOS grep'i saniyelerce.
+async function ripgrep($: $T): Promise<string | null> {
+  if (rg === undefined) {
+    rg = null
+    for (const yol of ['/opt/homebrew/bin/rg', '/usr/local/bin/rg', '/usr/bin/rg']) {
+      if (await $.fs.exists(yol)) {
+        rg = yol
+        break
+      }
+    }
+  }
+  return rg
+}
 
 export async function hataHafizasi($: $T, cikti: string): Promise<string | null> {
   if (!(await acik($, 'hata'))) return null
   const imza = hataImzasi(cikti)
   if (!imza || sorulan.has(imza)) return null
   sorulan.add(imza)
+  if (await ripgrep($)) return hafizadaAra($, imza)
+  // ripgrep yoksa arama komutun sonucunu bekletmez; bulunursa bir sonraki fırsatta iletilir.
+  hafizadaAra($, imza)
+    .then(not => not && notEkle(not))
+    .catch(() => {})
+  return null
+}
+
+async function hafizadaAra($: $T, imza: string): Promise<string | null> {
   const ev = await $.env.get('HOME')
   if (!ev) return null
   const buOturum = await $.session.id()
-  const bulunan = (await calistir($, ['find', `${ev}/.claude/projects`, '-maxdepth', '2', '-name', '*.jsonl', '-exec', 'grep', '-lF', '--', imza, '{}', '+'], undefined, 8_000)).out
+  const kok = `${ev}/.claude/projects`
+  const rgYolu = await ripgrep($)
+  const arama = rgYolu
+    ? await calistir($, [rgYolu, '-l', '-F', '--max-depth', '2', '-g', '*.jsonl', '--', imza, kok], undefined, 10_000)
+    : await calistir($, ['find', kok, '-maxdepth', '2', '-name', '*.jsonl', '-exec', 'grep', '-lF', '--', imza, '{}', '+'], undefined, 120_000)
+  const bulunan = arama.out
     .split('\n')
     .filter(d => d && !d.endsWith(`/${buOturum}.jsonl`))
   if (bulunan.length === 0) return null
 
   const ornekler: string[] = []
   for (const dosya of bulunan.slice(0, 3)) {
-    const satir = Number((await calistir($, ['grep', '-n', '-m1', '-F', '--', imza, dosya])).out.split(':')[0])
+    const satir = Number((await calistir($, rgYolu ? [rgYolu, '-n', '-m1', '-o', '-F', '--', imza, dosya] : ['grep', '-n', '-m1', '-o', '-F', '--', imza, dosya])).out.split(':')[0])
     if (!satir) continue
     const sonra = (await calistir($, ['sed', '-n', `${satir},${satir + 60}p`, dosya])).out.split('\n')
     const { zaman, metin } = sonrakiAciklama(sonra)

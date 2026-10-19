@@ -26,7 +26,7 @@ Her git reposunda, her dilde çalışır; parçaların çoğu yalnız gerektiği
 | Bildirimler | 1 dakikadan uzun iş bitince ve Claude izin/cevap beklerken macOS bildirimi. Telefona da: `/telefon` (ntfy; içerik gönderilmez, yalnız proje adı). Sesli: `/genel ac ses` |
 | Port çakışması | "port kullanımda" hatasında portu tutan programı gösterir, kapatma düğmesi verir |
 | `.env` denetimi | `.env.example`'da olup `.env`'de eksik değişkenleri söyler |
-| CI izleyici | PR açınca ya da push edince testleri izler, bitince bildirir; main kırmızıya dönerse uyarır |
+| CI izleyici | PR açınca ya da push edince testleri izler, bitince bildirir. main’e push testi kırılırsa prompt üstünde uyarır; [tamam] ile kapanır, yeni bir repo kırılınca tekrar çıkar |
 | Bağlam koruma | Sıkıştırmada açık PR'lar, kararlar ve bekleyen sorular özete girer; sonra güncel git durumu verilir |
 | Tur sonu kartı | Süre satırı yerine: `✓ 2 dk 14 sn · 3 dosya (+42 −10) · 2 komut` |
 | Takip | `/takip`: "cihazda denenmedi" ve "deploy sonrası yapılacak" listesi; Claude da ekleyebilir |

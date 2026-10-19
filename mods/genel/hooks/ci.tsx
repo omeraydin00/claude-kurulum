@@ -9,6 +9,8 @@ import type { $T } from './ortak'
 
 export const ci = atom({ plugin: 'genel', key: 'ci' } as const, [])
 const mainKirmizi = atom({ plugin: 'genel', key: 'mainKirmizi' } as const, [])
+// [tamam]'a basılınca o anki liste; aynı liste sürdükçe bant gizli kalır, yeni repo kırmızıya dönerse yeniden çıkar.
+const kirmiziGorulen = atom({ plugin: 'genel', key: 'kirmiziGorulen' } as const, '')
 
 const KONTROL_YOK_SN = 5 * 60
 const EN_UZUN_SN = 60 * 60
@@ -113,7 +115,13 @@ export async function ciOzeti($: $T): Promise<string | null> {
 
 export async function kirmiziBant($: $T, e: RenderInput<'AbovePrompt'>) {
   const kirmizi = await read($, mainKirmizi)
-  if (kirmizi.length === 0) return null
-  const { Text } = $.ui.resolve(e)
-  return <Text color="error" wrap="truncate-end">⛔ main kırmızı: {kirmizi.join(', ')}</Text>
+  const gorulen = (await read($, kirmiziGorulen)).split(',')
+  if (kirmizi.length === 0 || kirmizi.every(k => gorulen.includes(k))) return null
+  const { Box, Button, Text } = $.ui.resolve(e)
+  return (
+    <Box>
+      <Text color="error" wrap="truncate-end">⛔ main kırmızı: {kirmizi.join(', ')} </Text>
+      <Button key="kirmizi-tamam" plain label="[tamam]" onPress={() => update($, kirmiziGorulen, () => kirmizi.join(','))} />
+    </Box>
+  )
 }
