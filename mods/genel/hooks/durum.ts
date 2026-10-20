@@ -16,7 +16,7 @@ export function durumYaz($: $T, anahtar: Anahtar, metin: string | undefined) {
 const bekleyen: string[] = []
 
 export function notEkle(metin: string) {
-  bekleyen.push(metin)
+  if (!bekleyen.includes(metin)) bekleyen.push(metin)
 }
 
 export function notlariAl(): string[] {

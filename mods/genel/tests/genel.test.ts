@@ -3,7 +3,7 @@ import type { On } from 'claude-code'
 
 import { talimatEkle } from '../hooks/devir'
 import { anahtarlar } from '../hooks/env'
-import { hataImzasi, sonrakiAciklama } from '../hooks/hata'
+import { anahtarKelimeler, hataImzasi, sonrakiAciklama } from '../hooks/hata'
 import { kayittanCikar } from '../hooks/kaldik'
 import { komutKlasoru, projeKlasoru } from '../hooks/ortak'
 import { ortamSatiri } from '../hooks/ortam'
@@ -111,6 +111,10 @@ describe('yardımcılar', () => {
       JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Port 8081’i başka projenin Metro’su tutuyor; bunu 8082’de başlatıyorum.' }] } }),
     ]
     expect(sonrakiAciklama(satirlar)).toEqual({ zaman: '2026-10-03T08:00:00Z', metin: 'Port 8081’i başka projenin Metro’su tutuyor; bunu 8082’de başlatıyorum.' })
+    // Hatayı anmayan ilgisiz bir mesaj alıntılanmaz.
+    expect(anahtarKelimeler('Error: listen EADDRINUSE: address already in use')).toEqual(['listen', 'eaddrinuse', 'address', 'already'])
+    expect(sonrakiAciklama(satirlar, ['eaddrinuse']).metin).toBeNull()
+    expect(sonrakiAciklama(satirlar, ['metro']).metin).toContain('Metro')
   })
 
   test('nerede kaldık: son istekler ve son cevap', () => {
@@ -212,7 +216,7 @@ describe('kancalar', () => {
     mock.store(on)
     const eski = [
       JSON.stringify({ type: 'user', timestamp: '2026-10-03T08:00:00Z', message: { content: 'Error: listen EADDRINUSE: address already in use :::8081' } }),
-      JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Port 8081’i başka projenin Metro’su tutuyor; 8082’de başlatıyorum.' }] } }),
+      JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'EADDRINUSE: 8081’i başka projenin Metro’su tutuyor; 8082’de başlatıyorum.' }] } }),
     ].join('\n')
     dunya(on, {
       cwd: '/p', dosyalar: { '/opt/homebrew/bin/rg': '' }, klasorler: {}, hata: true, stdout: 'Error: listen EADDRINUSE: address already in use :::8081',
@@ -224,14 +228,14 @@ describe('kancalar', () => {
     })
     await $.session.start({ cwd: '/p', surface: null, isInteractive: false })
     const r = await $.tool.call({ tool: 'Bash', command: 'npx expo start' })
-    expect(r.context?.join('\n')).toContain('- projeler-api, 2026-10-03: "Port 8081’i başka projenin Metro’su tutuyor; 8082’de başlatıyorum."')
+    expect(r.context?.join('\n')).toContain('- projeler-api, 2026-10-03: "EADDRINUSE: 8081’i başka projenin Metro’su tutuyor; 8082’de başlatıyorum."')
   })
 
   test('ripgrep yoksa arama komutu bekletmez; bulunan bir sonraki mesajla iletilir', async ($, on) => {
     mock.store(on)
     const eski = [
       JSON.stringify({ type: 'user', timestamp: '2026-10-03T08:00:00Z', message: { content: 'Error: Cannot find module x' } }),
-      JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Paket kurulu değildi; npm install ile çözüldü, sonra tekrar denedim.' }] } }),
+      JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'Module kurulu değildi; npm install ile çözüldü, sonra tekrar denedim.' }] } }),
     ].join('\n')
     dunya(on, {
       cwd: '/p', dosyalar: {}, klasorler: {}, hata: true, stdout: "Error: Cannot find module 'x'",
@@ -272,6 +276,22 @@ describe('kancalar', () => {
     const sonra = await $.ui.mount({ plugin: 'genel', surface: 'desktop', component: 'AbovePrompt', props })
     await sonra.drawn()
     expect(await sonra.find({ text: /main kırmızı/ })).toBeUndefined()
+  })
+
+  test('main kırmızı notu yeniden yüklemelerde tekrarlanmaz', async ($, on) => {
+    mock.store(on)
+    let sorgu = 0
+    dunya(on, { cwd: '/p/site', dosyalar: {}, klasorler: {}, komutlar: [...repo('/p/site', 'ornek/site'), [/^gh run list/, () => { sorgu++; return '[{"conclusion":"failure"}]' }], [/^gh /, '[]']] })
+    const notlar: string[] = []
+    for (let yukleme = 0; yukleme < 3; yukleme++) {
+      const once = sorgu
+      await $.session.start({ cwd: '/p/site', surface: null, isInteractive: false })
+      await bekleKadar(() => sorgu > once)
+      await bekleKadar(() => false)
+      const p = await $.prompt.submit({ text: 'devam' } as never)
+      notlar.push(...(p.context ?? []).filter(c => c.startsWith('[genel/ci]')))
+    }
+    expect(notlar).toEqual(["[genel/ci] site main CI'ı kırmızı; bu repolarda PR merge etmeden önce kullanıcıya söyle."])
   })
 
   test('takip_ekle aracı listeye yazar, /takip tamam kapatır', async ($, on) => {
