@@ -4,7 +4,7 @@ import type { RenderInput } from 'claude-code'
 import type { CiIzleme } from '../types'
 import { acik } from './ayar'
 import { durumYaz, notEkle } from './durum'
-import { calistir, gitKlasoru, kapsamRepolar, repoBilgisi } from './ortak'
+import { calistir, dosyaOku, gitKlasoru, kapsamRepolar, repoBilgisi } from './ortak'
 import type { $T } from './ortak'
 
 export const ci = atom({ plugin: 'genel', key: 'ci' } as const, [])
@@ -105,10 +105,14 @@ async function mainKontrol($: $T) {
       if (son && ['failure', 'timed_out', 'startup_failure'].includes(son.conclusion)) kirmizi.push(r.ad)
     } catch {}
   }
-  // Bildirilen liste store'da: mod yeniden yüklenince aynı kırmızı tekrar "yeni" sayılmasın.
-  const once = ((await $.store.get('ci.bildirilen')) as string[] | undefined) ?? []
+  // Bildirilen liste diskte: mod yeniden yüklenince aynı kırmızı tekrar "yeni" sayılmasın.
+  const dosya = `${(await $.env.get('HOME')) ?? '/tmp'}/.claude/genel/ci-bildirilen.json`
+  let once: string[] = []
+  try {
+    once = JSON.parse((await dosyaOku($, dosya)) ?? '[]') as string[]
+  } catch {}
   const yeni = kirmizi.filter(k => !once.includes(k))
-  await $.store.set('ci.bildirilen', kirmizi)
+  if (kirmizi.join(',') !== once.join(',')) await $.fs.write(dosya, JSON.stringify(kirmizi)).catch(() => {})
   if (yeni.length) {
     $.ui.toast(`⛔ main kırmızı: ${yeni.join(', ')}`, { timeoutMs: 10_000 })
     notEkle(`[genel/ci] ${yeni.join(', ')} main CI'ı kırmızı; bu repolarda PR merge etmeden önce kullanıcıya söyle.`)
