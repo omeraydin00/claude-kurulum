@@ -23,6 +23,12 @@ for e in claude-hud@claude-hud code-review@claude-plugins-official cc-safety-net
   claude plugin install "$e" || echo "  ! $e kurulamadı"
 done
 
+adim "Bildirim aracı (macOS)"
+if command -v brew >/dev/null && ! command -v terminal-notifier >/dev/null; then
+  brew install terminal-notifier || echo "  ! terminal-notifier kurulamadı; bildirimler osascript ile denenir"
+fi
+command -v terminal-notifier >/dev/null && echo "  Sistem Ayarları → Bildirimler → terminal-notifier: \"Bildirimlere izin ver\" açık olsun"
+
 adim "claude-hud durum satırı"
 CALISTIRICI="$(command -v bun || command -v node || true)"
 HUD_KOMUTU=""

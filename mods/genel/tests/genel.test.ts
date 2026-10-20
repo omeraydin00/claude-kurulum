@@ -445,6 +445,14 @@ describe('kancalar', () => {
     expect(son).toMatchObject({ title: 'Claude seni bekliyor', message: 'site' })
     expect(giden.at(-1)).not.toContain('permission to use Bash')
   })
+  test('terminal-notifier varsa bildirim onunla gider', async ($, on) => {
+    mock.store(on)
+    const calisan = dunya(on, { cwd: '/p', dosyalar: { '/opt/homebrew/bin/terminal-notifier': '' }, klasorler: {}, komutlar: [[/terminal-notifier/, '']] })
+    await $.session.start({ cwd: '/p', surface: null, isInteractive: false })
+    await $.classic.Notification({ message: 'Onay bekleniyor', notification_type: 'permission_prompt' } as never)
+    expect(calisan.some(c => c.startsWith('/opt/homebrew/bin/terminal-notifier -title Claude seni bekliyor -message Onay bekleniyor'))).toBe(true)
+    expect(calisan.some(c => c.startsWith('osascript'))).toBe(false)
+  })
 })
 
 describe('kart ve gösterge metinleri', () => {
