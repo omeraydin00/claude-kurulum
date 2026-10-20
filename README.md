@@ -9,7 +9,7 @@ git clone https://github.com/omeraydin00/claude-kurulum.git ~/Documents/GitHub/c
 ~/Documents/GitHub/claude-kurulum/kur.sh
 ```
 
-Sonra yeni bir terminalde `claude` aç. Betik tekrar çalıştırılabilir: `~/.claude/settings.json`'ın yedeğini alır ve yalnız aşağıdaki ayarları ekler, diğerlerine dokunmaz. Gerekenler: Claude Code 2.1.287+, `python3`, `bun` ya da `node`.
+Sonra yeni bir terminalde `claude` aç. macOS bildirimleri için ilk seferde Sistem Ayarları → Bildirimler → **terminal-notifier** → "Bildirimlere izin ver"i aç (stil: Kalıcı). Betik tekrar çalıştırılabilir: `~/.claude/settings.json`'ın yedeğini alır ve yalnız aşağıdaki ayarları ekler, diğerlerine dokunmaz. Gerekenler: Claude Code 2.1.287+, `python3`, `bun` ya da `node`.
 
 Kendi özel modların ayrı bir repodaysa onu bu reponun yanına `claude-<ad>` adıyla klonla (`../claude-<ad>/mods/<mod>`); `kur.sh` onları da yükler.
 
