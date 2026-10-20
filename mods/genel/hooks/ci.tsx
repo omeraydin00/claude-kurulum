@@ -82,7 +82,19 @@ async function tur($: $T) {
 }
 
 // main'in son tamamlanan CI koşusu: kırmızıya dönen repo bildirilir, bantta durur.
+let mainSuruyor = false
+
 async function mainTur($: $T) {
+  if (mainSuruyor) return
+  mainSuruyor = true
+  try {
+    await mainKontrol($)
+  } finally {
+    mainSuruyor = false
+  }
+}
+
+async function mainKontrol($: $T) {
   if (!(await acik($, 'ci'))) return update($, mainKirmizi, () => [])
   const kirmizi: string[] = []
   for (const r of (await kapsamRepolar($)).filter(x => x.slug)) {
@@ -93,8 +105,10 @@ async function mainTur($: $T) {
       if (son && ['failure', 'timed_out', 'startup_failure'].includes(son.conclusion)) kirmizi.push(r.ad)
     } catch {}
   }
-  const once = await read($, mainKirmizi)
+  // Bildirilen liste store'da: mod yeniden yüklenince aynı kırmızı tekrar "yeni" sayılmasın.
+  const once = ((await $.store.get('ci.bildirilen')) as string[] | undefined) ?? []
   const yeni = kirmizi.filter(k => !once.includes(k))
+  await $.store.set('ci.bildirilen', kirmizi)
   if (yeni.length) {
     $.ui.toast(`⛔ main kırmızı: ${yeni.join(', ')}`, { timeoutMs: 10_000 })
     notEkle(`[genel/ci] ${yeni.join(', ')} main CI'ı kırmızı; bu repolarda PR merge etmeden önce kullanıcıya söyle.`)

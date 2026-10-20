@@ -26,8 +26,15 @@ function metinBlogu(k: Kayit): string | null {
   return t?.text?.trim() ?? null
 }
 
-// Kayıt dosyasında hatanın geçtiği satırdan sonra Claude'un ilk açıklaması.
-export function sonrakiAciklama(satirlar: string[]): { zaman: string | null; metin: string | null } {
+const GENEL_KELIME = new Set(['error', 'errors', 'cannot', 'failed', 'failure', 'could', 'found', 'denied', 'refused', 'fatal', 'while', 'there'])
+
+// İmzadaki ayırt edici kelimeler (ör. "module", "eaddrinuse"); açıklamanın gerçekten bu hatayla ilgili olduğunu bunlar gösterir.
+export function anahtarKelimeler(imza: string): string[] {
+  return [...new Set(imza.toLowerCase().split(/[^a-z0-9_]+/).filter(k => k.length >= 5 && !GENEL_KELIME.has(k)))]
+}
+
+// Kayıt dosyasında hatanın geçtiği satırdan sonra Claude'un hatayı anan ilk açıklaması.
+export function sonrakiAciklama(satirlar: string[], anahtarlar: readonly string[] = []): { zaman: string | null; metin: string | null } {
   let zaman: string | null = null
   for (const s of satirlar) {
     let k: Kayit
@@ -38,7 +45,7 @@ export function sonrakiAciklama(satirlar: string[]): { zaman: string | null; met
     }
     zaman ??= k.timestamp ?? null
     const t = metinBlogu(k)
-    if (t) return { zaman, metin: t.replace(/\s+/g, ' ').slice(0, 600) }
+    if (t && (anahtarlar.length === 0 || anahtarlar.some(a => t.toLowerCase().includes(a)))) return { zaman, metin: t.replace(/\s+/g, ' ').slice(0, 300) }
   }
   return { zaman, metin: null }
 }
@@ -92,11 +99,11 @@ async function hafizadaAra($: $T, imza: string): Promise<string | null> {
     const satir = Number((await calistir($, rgYolu ? [rgYolu, '-n', '-m1', '-o', '-F', '--', imza, dosya] : ['grep', '-n', '-m1', '-o', '-F', '--', imza, dosya])).out.split(':')[0])
     if (!satir) continue
     const sonra = (await calistir($, ['sed', '-n', `${satir},${satir + 60}p`, dosya])).out.split('\n')
-    const { zaman, metin } = sonrakiAciklama(sonra)
+    const { zaman, metin } = sonrakiAciklama(sonra, anahtarKelimeler(imza))
     const proje = adi(dosya.slice(0, dosya.lastIndexOf('/'))).replace(/^-Users-[^-]+-(Documents-)?(GitHub-)?/, '')
     ornekler.push(`- ${proje}${zaman ? `, ${zaman.slice(0, 10)}` : ''}${metin ? `: "${metin}"` : ''} (kayıt: ${dosya}:${satir})`)
   }
   if (ornekler.length === 0) return null
   $.ui.toast(`🧠 Bu hata daha önce ${bulunan.length} oturumda görüldü`, { timeoutMs: 6_000 })
-  return `[genel/hata] "${imza}" hatası eski oturumlarda da görülmüş. O zamanki ilk açıklama (çözüm sonraki satırlarda olabilir; gerekirse kayıttan oku):\n${ornekler.join('\n')}`
+  return `[genel/hata] "${imza}" hatası eski oturumlarda da görülmüş. Çözüm gerekiyorsa önce bu kayıtlara bak (alıntı varsa o zamanki açıklama):\n${ornekler.join('\n')}`
 }
