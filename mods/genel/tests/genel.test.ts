@@ -212,6 +212,31 @@ describe('kancalar', () => {
     expect(calisan).toContain('kill 4242')
   })
 
+  test('port boşalınca uyarı kendiliğinden kalkar', async ($, on) => {
+    mock.store(on)
+    let tutuluyor = true
+    dunya(on, {
+      cwd: '/p', dosyalar: {}, klasorler: {}, hata: true, stdout: 'Error: listen EADDRINUSE: address already in use :::8081',
+      komutlar: [[/^lsof -nP -iTCP:8081 -sTCP:LISTEN -Fpc/, 'p4242\ncnode'], [/^lsof -nP -iTCP:8081 -sTCP:LISTEN -Fp @/, () => (tutuluyor ? 'p4242' : ''), () => (tutuluyor ? 0 : 1)], [/^lsof -a -p 4242/, 'n/p/mobil'], [/^find /, '']],
+    })
+    on('ui.render', ($, e) => h($.ui.resolve(e).Text, {}, '') as never)
+    await $.session.start({ cwd: '/p', surface: null, isInteractive: false })
+    await $.tool.call({ tool: 'Bash', command: 'npx expo start' })
+    const props = { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 120, scroll: { offset: 0, bodyRows: 9 }, view: {} }
+    const ciz = async () => {
+      const b = await $.ui.mount({ plugin: 'genel', surface: 'desktop', component: 'AbovePrompt', props })
+      await b.drawn()
+      const var_ = Boolean(await b.find({ text: /Port 8081/ }))
+      await b.unmount()
+      return var_
+    }
+    await saat.advance(15_000)
+    expect(await ciz()).toBe(true)
+    tutuluyor = false
+    await saat.advance(15_000)
+    expect(await ciz()).toBe(false)
+  })
+
   test('hata eski oturumda görüldüyse Claude’a o zamanki açıklama iletilir', async ($, on) => {
     mock.store(on)
     const eski = [

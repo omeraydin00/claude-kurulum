@@ -31,6 +31,19 @@ export async function portCakismasi($: $T, cikti: string): Promise<string | null
   return `[genel/port] Port ${port}'i ${program} (pid ${pid}${klasor ? `, klasör ${klasor}` : ''}) tutuyor. Kullanıcıya prompt üstünde "Kapat" düğmesi gösterildi; kendin öldürme, başka port önerebilirsin.`
 }
 
+// Port boşaldıysa ya da onu tutan program kapandıysa uyarı kendiliğinden kalkar.
+export async function portDenetle($: $T) {
+  const c = await read($, cakisma)
+  if (!c) return
+  const tutan = (await calistir($, ['lsof', '-nP', `-iTCP:${c.port}`, '-sTCP:LISTEN', '-Fp'])).out.match(/^p(\d+)/m)?.[1]
+  if (Number(tutan) !== c.pid) await update($, cakisma, () => null)
+}
+
+export function portBaslat($: $T) {
+  portDenetle($).catch(() => {})
+  $.clock.every(15_000, () => portDenetle($).catch(() => {}))
+}
+
 export async function portBant($: $T, e: RenderInput<'AbovePrompt'>) {
   const c = await read($, cakisma)
   if (!c) return null

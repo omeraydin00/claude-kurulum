@@ -14,7 +14,7 @@ import { kaldikBaglami, kaldikBaslat, kaldikBant, kaldikKapat } from './kaldik'
 import { kartBaslat, kartCiz, kartKaydet, kartSay } from './kart'
 import { komutKlasoru, repoBilgisi } from './ortak'
 import { ortamBaslat } from './ortam'
-import { portBant, portCakismasi } from './port'
+import { portBant, portBaslat, portCakismasi } from './port'
 import { tabletBaslat, tabletKaydet, tabletKomutu, tabletPrompt } from './tablet'
 import { TAKIP_EKLE, TAKIP_KAPAT, takipAraclari, takipEkle, takipKapat, takipKomut, takipKomutu, takipPrNotu, takipYukle } from './takip'
 import { telefonKomut, telefonKomutu } from './telefon'
@@ -35,6 +35,7 @@ export const register: Register = on => {
     tabletBaslat($)
     ciBaslat($)
     ortamBaslat($)
+    portBaslat($)
     // Ağ ve git işi bekletmesin: oturum hemen açılır, sonuçlar gelince bantta görünür.
     kaldikBaslat($).catch(() => {})
     envBaslat($).then(n => n.forEach(notEkle)).catch(() => {})
