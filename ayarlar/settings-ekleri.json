@@ -23,5 +23,10 @@
     "type": "command",
     "command": "{HUD_KOMUTU}",
     "refreshInterval": 5
+  },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
   }
 }
